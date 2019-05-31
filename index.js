@@ -56,24 +56,29 @@ class Paddle{
 //collision detector
 function detectCollision(ball, gameObj){
 	
-	if (ball.position.y < gameObj.position.y){
-		let yMatch = ((ball.position.y + ball.height) == gameObj.position.y);
-		let xMatch1 = (- gameObj.position.x + ball.position.x) <= (gameObj.width - ball.width/2);
-		let xMatch2 = (- gameObj.position.x + ball.position.x) >= -ball.width/2;
-		
-		if (xMatch1 && xMatch2 && yMatch) return true;
-		else return false;
-	}
+	let xMatch1 = (- gameObj.position.x + ball.position.x) <= (gameObj.width - ball.width/2);
+	let xMatch2 = (- gameObj.position.x + ball.position.x) >= -ball.width/2;
+	let xMatch = false;
+	
+	if (xMatch1 && xMatch2) xMatch = true;
+	
+	let yMatch = false;
+	let yMatchFromUp = false;
+	let yMatchFromDown = false;
 	
 	if (ball.position.y > gameObj.position.y){
-		let yMatch = (gameObj.position.y + gameObj.height) == ball.position.y;
-		let xMatch1 = (- gameObj.position.x + ball.position.x) <= (gameObj.width - ball.width/2);
-		let xMatch2 = (- gameObj.position.x + ball.position.x) >= -ball.width/2;
-	
-		if (xMatch1 && xMatch2 && yMatch) return true;
-		else return false;
+		yMatchFromDown = (gameObj.position.y + gameObj.height) >= ball.position.y;
 	}
-		
+	if (ball.position.y <= gameObj.position.y){
+		yMatchFromUp = (ball.position.y + ball.height) >= gameObj.position.y;
+	}
+	
+	
+	if (yMatchFromUp || yMatchFromDown) yMatch = true;
+	
+	
+	if (xMatch && yMatch) return true;
+
 }
 
 
@@ -198,6 +203,9 @@ class Brick{
 		
 		//position of brick
 		this.position = position;
+		
+		//marking for deletion
+		this.markedForDeletion = false;
 	}
 	
 	//draw the brick
@@ -212,6 +220,7 @@ class Brick{
 		
 		if(detectCollision(ball, this)){
 			ball.speed.y = -ball.speed.y;
+			this.markedForDeletion = true;
 		}
 	}
 	
@@ -273,12 +282,18 @@ function gameLoop(timestamp){
 	//drawing paddle in new coordinates
 	paddle.draw(ctx);
 	
-	for(let i=0; i<64; i++){
+	
+	//updating bricks
+	for(let i=0; i<bricks.length; i++){
 		bricks[i].update(deltaTime);
 	}
 	
-	
-	for(let i=0; i<64; i++){
+	//filtering bricks
+	bricks = bricks.filter(function(brick){
+		return brick.markedForDeletion == false;
+	});
+
+	for(let i=0; i<bricks.length; i++){
 		bricks[i].draw(ctx);
 	}
 	
