@@ -229,6 +229,18 @@ class Brick{
 
 
 
+const GAMESTATE = {
+	
+	PAUSED : 0,
+	RUNNING : 0,
+	MENU : 3,
+	GAMEOVER : 3,
+	
+}
+
+
+
+
 // getting the canvas and the context
 let canvas = document.getElementById('gameScreen');
 let ctx = canvas.getContext('2d');
@@ -276,6 +288,7 @@ function gameLoop(timestamp){
 	lastTime = timestamp;
 	
 	ctx.clearRect(0,0,800,600);
+	
 	
 	//updating paddle coordinates
 	paddle.update(deltaTime);
