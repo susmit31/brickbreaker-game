@@ -1,4 +1,4 @@
-///paddle class
+//paddle class
 class Paddle{
 	
 	//constructor
