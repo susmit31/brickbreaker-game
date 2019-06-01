@@ -1,8 +1,70 @@
+//game class
+class Game{
+	
+	constructor(gameWidth, gameHeight){
+		
+		this.width = gameWidth;
+		this.height = gameHeight;
+		
+	}
+	
+	
+	start(){
+		
+		this.paddle = new Paddle(this);
+		new InputHandler(this.paddle);
+		
+		this.ball = new Ball(this, 'img_ball', this.paddle);
+		this.ball.handleBall();
+		
+		this.bricks = [];
+
+		for(let i=0; i<16; i++){
+			for (let j=0; j<4; j++){
+				this.bricks.push(new Brick(this,'img_brick', {x : i*50, y : j*25}));
+			}
+			
+		}
+		
+	}
+	
+	draw(ctx){
+		
+		this.paddle.draw(ctx);
+		this.ball.draw(ctx);
+		for(let i=0; i<this.bricks.length; i++){
+			this.bricks[i].draw(ctx);
+		}
+		
+	}
+	
+	update(deltaTime){
+		
+		this.paddle.update(deltaTime);
+		this.ball.update(deltaTime);
+		
+		//updating bricks
+		for(let i=0; i<this.bricks.length; i++){
+			this.bricks[i].update(deltaTime);
+		}
+		
+		//filtering bricks
+		this.bricks = this.bricks.filter(function(brick){
+			return brick.markedForDeletion == false;
+		});
+	
+	}
+	
+}
+
+
+
+
 //paddle class
 class Paddle{
 	
 	//constructor
-	constructor(gameWidth, gameHeight){
+	constructor(game){
 		//size
 		this.width = 120;
 		this.height = 13;
@@ -13,8 +75,8 @@ class Paddle{
 		
 		//position
 		this.position = {
-			x: gameWidth/2 - this.width/2,
-			y: gameHeight - this.height - 10,
+			x: game.width/2 - this.width/2,
+			y: game.height - this.height - 10,
 		 };
 	 }
 	
@@ -122,7 +184,7 @@ class InputHandler{
 class Ball{
 	
 	//constructor
-	constructor(gameWidth, gameHeight, id, paddle){
+	constructor(game, id){
 		
 		//size of the ball
 		this.width = 25;
@@ -137,8 +199,8 @@ class Ball{
 		
 		//position of the ball
 		this.position = {
-			x : paddle.position.x + paddle.width/2 - this.width/2,
-			y : paddle.position.y - this.height
+			x : game.paddle.position.x + game.paddle.width/2 - this.width/2,
+			y : game.paddle.position.y - this.height
 		};
 			
 		// fetching the ball image
@@ -171,7 +233,7 @@ class Ball{
 	//update method
 	update(deltaTime){
 		if (this.speed.y == 0){
-			this.position.x = paddle.position.x + this.width/2;
+			this.position.x = game.paddle.position.x + this.width/2;
 		}
 		
 		else {
@@ -183,7 +245,7 @@ class Ball{
 			if(this.position.x < 0) this.speed.x = this.maxSpeed;
 			if(this.position.x > 800-25) this.speed.x = - this.maxSpeed;
 			if(this.position.y < 0) this.speed.y = this.maxSpeed;
-			if(detectCollision(this,paddle) && this.speed.y!=0) this.speed.y = - this.maxSpeed;
+			if(detectCollision(this,game.paddle) && this.speed.y!=0) this.speed.y = - this.maxSpeed;
 		}
 	}
 }
@@ -193,7 +255,7 @@ class Ball{
 //brick class
 class Brick{
 	
-	constructor(id, position){
+	constructor(game, id, position){
 		//fetch the image
 		this.imgBrick = document.getElementById(id);
 		
@@ -218,8 +280,8 @@ class Brick{
 	//update brick's existence
 	update(deltaTime){
 		
-		if(detectCollision(ball, this)){
-			ball.speed.y = -ball.speed.y;
+		if(detectCollision(game.ball, this)){
+			game.ball.speed.y = -game.ball.speed.y;
 			this.markedForDeletion = true;
 		}
 	}
@@ -251,35 +313,14 @@ const GAME_WIDTH = 800;
 ctx.clearRect(0,0,800,600);
 
 
-//making a paddle
-let paddle = new Paddle(GAME_WIDTH, GAME_HEIGHT);
+let game = new Game(GAME_WIDTH, GAME_HEIGHT);
+game.start();
+game.draw(ctx);
 
-paddle.draw(ctx);
-
-new InputHandler(paddle);
 
 let lastTime = 0;
 
 
-//ball
-let ball = new Ball(GAME_WIDTH, GAME_HEIGHT, 'img_ball', paddle);
-
-ball.draw(ctx);
-
-ball.handleBall();
-
-//bricks
-let bricks = [];
-
-for(let i=0; i<16; i++){
-	for (let j=0; j<4; j++){
-		bricks.push(new Brick('img_brick', {x : i*50, y : j*25}));
-	}
-}
-
-for(let i=0; i<13; i++){
-	bricks[i].draw(ctx);
-}
 
 
 //the game loop
@@ -290,30 +331,8 @@ function gameLoop(timestamp){
 	ctx.clearRect(0,0,800,600);
 	
 	
-	//updating paddle coordinates
-	paddle.update(deltaTime);
-	//drawing paddle in new coordinates
-	paddle.draw(ctx);
-	
-	
-	//updating bricks
-	for(let i=0; i<bricks.length; i++){
-		bricks[i].update(deltaTime);
-	}
-	
-	//filtering bricks
-	bricks = bricks.filter(function(brick){
-		return brick.markedForDeletion == false;
-	});
-
-	for(let i=0; i<bricks.length; i++){
-		bricks[i].draw(ctx);
-	}
-	
-	//updating ball coordinates
-	ball.update(deltaTime);
-	//drawing ball in new coordinates
-	ball.draw(ctx);
+	game.update(deltaTime);
+	game.draw(ctx);
 	
 	
 	requestAnimationFrame(gameLoop);
