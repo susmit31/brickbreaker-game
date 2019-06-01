@@ -1,3 +1,14 @@
+const GAMESTATE = {
+	
+	PAUSED : 0,
+	RUNNING : 1,
+	MENU : 2,
+	GAMEOVER : 3,
+	
+}
+
+
+
 //game class
 class Game{
 	
@@ -10,9 +21,12 @@ class Game{
 	
 	
 	start(){
+		//running state
+		this.gameState = GAMESTATE.RUNNING;
 		
+		//instantiating game objects
 		this.paddle = new Paddle(this);
-		new InputHandler(this.paddle);
+		new InputHandler(this, this.paddle);
 		
 		this.ball = new Ball(this, 'img_ball', this.paddle);
 		this.ball.handleBall();
@@ -29,18 +43,63 @@ class Game{
 	}
 	
 	draw(ctx){
-		
+	
 		this.paddle.draw(ctx);
+		
 		this.ball.draw(ctx);
+		
 		for(let i=0; i<this.bricks.length; i++){
 			this.bricks[i].draw(ctx);
 		}
 		
+		//pause screen
+		if (this.gameState == GAMESTATE.PAUSED){
+			
+			//shading up the game screen
+			ctx.fillStyle = 'rgba(0,0,0,0.25)';
+			ctx.fillRect(0, 0, this.width, this.height);
+			
+			//writing 'paused'
+			ctx.font = '50px consolas';
+			ctx.fillStyle = 'dodgerblue';
+			ctx.textAlign = 'center';
+			ctx.fillText('Paused', this.width/2, this.height/2);
+			
+		}
+		
+		//game over
+		if (this.gameState == GAMESTATE.GAMEOVER){
+			
+			
+			//shading up the game screen
+			ctx.fillStyle = 'rgba(0,0,0,0.5)';
+			ctx.fillRect(0,0, this.width, this.height);
+			
+			//writing 'game over'
+			ctx.fillStyle = 'tomato';
+			ctx.font = '50px "copperplate gothic bold"';
+			ctx.textAlign = 'center';
+			ctx.fillText('GAME OVER', this.width/2, this.height/2);
+			
+		}
+		
+		
 	}
 	
 	update(deltaTime){
+		//pausing the game
+		if(this.gameState == GAMESTATE.PAUSED) return;
 		
+		//checking for game over
+		if(this.ball.position.y > this.height) {
+			this.gameState = GAMESTATE.GAMEOVER;
+			return;
+		}
+		
+		//updating paddle
 		this.paddle.update(deltaTime);
+		
+		//updating ball
 		this.ball.update(deltaTime);
 		
 		//updating bricks
@@ -52,6 +111,16 @@ class Game{
 		this.bricks = this.bricks.filter(function(brick){
 			return brick.markedForDeletion == false;
 		});
+	
+	}
+	
+	togglePause(){
+		
+		if (this.gameState == GAMESTATE.PAUSED){
+			this.gameState = GAMESTATE.RUNNING;
+		}
+		
+		else this.gameState = GAMESTATE.PAUSED;
 	
 	}
 	
@@ -150,7 +219,7 @@ function detectCollision(ball, gameObj){
 class InputHandler{
 	
 	// constructor
-	constructor(paddle){
+	constructor(game, paddle){
 		//event listeners
 		document.addEventListener('keydown', event => {
 			switch(event.keyCode){
@@ -161,6 +230,9 @@ class InputHandler{
 				case 39:
 					paddle.moveRight();
 					break;
+					
+				case 27:
+					game.togglePause();
 			}
 		});
 		
@@ -287,19 +359,6 @@ class Brick{
 	}
 	
 }
-
-
-
-
-const GAMESTATE = {
-	
-	PAUSED : 0,
-	RUNNING : 0,
-	MENU : 3,
-	GAMEOVER : 3,
-	
-}
-
 
 
 
