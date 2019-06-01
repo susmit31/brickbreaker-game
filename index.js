@@ -193,7 +193,7 @@ class Ball{
 //brick class
 class Brick{
 	
-	constructor(id, position, ball){
+	constructor(id, position){
 		//fetch the image
 		this.imgBrick = document.getElementById(id);
 		
