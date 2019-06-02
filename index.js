@@ -4,6 +4,7 @@ const GAMESTATE = {
 	RUNNING : 1,
 	MENU : 2,
 	GAMEOVER : 3,
+	CLEARLEVEL : 4,
 	
 }
 
@@ -26,15 +27,17 @@ class Game{
 		
 		//instantiating game objects
 		this.paddle = new Paddle(this);
-		new InputHandler(this, this.paddle);
+		
 		
 		this.ball = new Ball(this, 'img_ball', this.paddle);
-		this.ball.handleBall();
+		
 		
 		this.bricks = [];
+		this.brickWidth = 50; //brick.width
+		this.brickCols = Math.floor(GAME_WIDTH/this.brickWidth);
 
-		for(let i=0; i<16; i++){
-			for (let j=0; j<4; j++){
+		for(let i=1; i<this.brickCols; i++){
+			for (let j=2; j<=5; j++){
 				this.bricks.push(new Brick(this,'img_brick', {x : i*50, y : j*25}));
 			}
 			
@@ -77,24 +80,35 @@ class Game{
 			
 			//writing 'game over'
 			ctx.fillStyle = 'tomato';
-			ctx.font = '50px "copperplate gothic bold"';
+			ctx.font = '50px "Germania One"';
+			//ctx.fontWeight = 'bold';
 			ctx.textAlign = 'center';
 			ctx.fillText('GAME OVER', this.width/2, this.height/2);
+			ctx.font = '20px "copperplate gothic bold"';
+			ctx.fillText('Press enter to restart', this.width/2, this.height/2+50);
 			
+		}
+		
+		//level clear
+		if (this.gameState == GAMESTATE.CLEARLEVEL){
+			
+			//shading up the game screen
+			ctx.fillStyle = 'rgba(0,0,0,0.25)';
+			ctx.fillRect(0,0, this.width, this.height);
+			
+			//display 'level clear'
+			ctx.fillStyle = 'mediumseagreen';
+			ctx.font = '50px acme';
+			ctx.textAlign = 'center';
+			ctx.fillText('LEVEL', this.width/2, this.height/2);
+			ctx.fillText('CLEARED!', this.width/2, this.height/2+50);
+		
 		}
 		
 		
 	}
 	
 	update(deltaTime){
-		//pausing the game
-		if(this.gameState == GAMESTATE.PAUSED) return;
-		
-		//checking for game over
-		if(this.ball.position.y > this.height) {
-			this.gameState = GAMESTATE.GAMEOVER;
-			return;
-		}
 		
 		//updating paddle
 		this.paddle.update(deltaTime);
@@ -111,6 +125,20 @@ class Game{
 		this.bricks = this.bricks.filter(function(brick){
 			return brick.markedForDeletion == false;
 		});
+		
+		if(this.bricks.length == 0) {
+			this.gameState = GAMESTATE.CLEARLEVEL;
+			return;
+		}
+		
+		//pausing the game
+		if(this.gameState == GAMESTATE.PAUSED) return;
+		
+		//checking for game over
+		if(this.ball.position.y > this.height) {
+			this.gameState = GAMESTATE.GAMEOVER;
+			return;
+		}
 	
 	}
 	
@@ -139,7 +167,7 @@ class Paddle{
 		this.height = 13;
 		
 		//speed
-		this.maxSpeed = 7.5;
+		this.maxSpeed = 10;
 		this.speed = 0;
 		
 		//position
@@ -177,7 +205,7 @@ class Paddle{
 		this.position.x += this.speed;
 		
 		if (this.position.x < 0) this.position.x = 0;
-		if (this.position.x + this.width > 800) this.position.x = 680;
+		if (this.position.x + this.width > game.width) this.position.x = game.width - this.width;
 	}
 }
 
@@ -215,40 +243,89 @@ function detectCollision(ball, gameObj){
 
 
 
-//input handling class
-class InputHandler{
+//input handling function for desktop
+function DesktopInputHandler(game){
 	
-	// constructor
-	constructor(game, paddle){
-		//event listeners
-		document.addEventListener('keydown', event => {
-			switch(event.keyCode){
-				case 37:
-					paddle.moveLeft();
-					break;
+	//event listeners for paddle
+	document.addEventListener('keydown', event => {
+		switch(event.keyCode){
+			case 37:
+				game.paddle.moveLeft();
+				break;
 					
-				case 39:
-					paddle.moveRight();
-					break;
+			case 39:
+				game.paddle.moveRight();
+				break;
 					
-				case 27:
-					game.togglePause();
+			case 27:
+				game.togglePause();
+				break;
+					
+			case 13:
+				if (game.gameState == GAMESTATE.GAMEOVER){
+					game.gameState = GAMESTATE.RUNNING;
+				}
 			}
 		});
 		
-		document.addEventListener('keyup', event => {
-			switch(event.keyCode){
-				case 37:
-					if(paddle.speed < 0) paddle.stop();
-					break;
+	document.addEventListener('keyup', event => {
+		switch(event.keyCode){
+			case 37:
+				if(game.paddle.speed < 0) game.paddle.stop();
+				break;
 					
-				case 39:
-					if (paddle.speed > 0) paddle.stop();
-					break;
-			}
-		});
-	}
+			case 39:
+				if (game.paddle.speed > 0) game.paddle.stop();
+				break;
+		}
+	});
+	
+	//event listeners for ball
+	//handle the ball events on desktop	
+	document.addEventListener('keydown', event => {
+			
+		if (event.keyCode == 32) //&& ballTouchesPaddle
+			game.ball.shootBall();
+		
+	});
+
 }
+
+
+
+
+//input handler for phones
+function TouchInputHandler(game){
+	
+	//handle paddle
+	document.addEventListener('touchmove', event => {	
+		//easing constant
+		const EASING = 0.25;
+		//touch point
+		var touchX = event.targetTouches[0].pageX - canvas.offsetLeft;
+		//distance of paddle from touch point
+		var vx = touchX - game.paddle.position.x - game.paddle.width/2;
+		//move paddle if more than 1px away from the touch point
+		if (vx > 1 || vx < 1) game.paddle.position.x += vx*EASING;
+		else game.paddle.position.x = touchX;
+		
+		
+		//preventing selection on tap
+		event.preventDefault();
+	});
+	
+
+	//handle ball
+	document.addEventListener('touchstart', event => {
+		if(game.ball.speed.y == 0){
+			game.ball.maxSpeed = 4
+			game.ball.shootBall();
+		}
+	});
+		
+}
+
+
 
 
 
@@ -293,14 +370,6 @@ class Ball{
 		this.width, this.height);
 	}
 	
-	//handle the ball events
-	handleBall(){
-		document.addEventListener('keydown', event => {
-			if (event.keyCode == 32) //&& ballTouchesPaddle
-				this.shootBall();
-		});
-	}
-
 	
 	//update method
 	update(deltaTime){
@@ -314,9 +383,11 @@ class Ball{
 			
 			
 			//collision detection
-			if(this.position.x < 0) this.speed.x = this.maxSpeed;
-			if(this.position.x > 800-25) this.speed.x = - this.maxSpeed;
-			if(this.position.y < 0) this.speed.y = this.maxSpeed;
+			if(this.position.x < 0 || this.position.x > game.width - this.width){
+				this.speed.x = -this.speed.x;
+			}
+			
+			if(this.position.y < 53) this.speed.y = -this.speed.y;
 			if(detectCollision(this,game.paddle) && this.speed.y!=0) this.speed.y = - this.maxSpeed;
 		}
 	}
@@ -332,7 +403,7 @@ class Brick{
 		this.imgBrick = document.getElementById(id);
 		
 		//size of brick
-		this.width = 50;
+		this.width = 50; //game.brickWidth
 		this.height = 25;
 		
 		//position of brick
@@ -366,20 +437,34 @@ class Brick{
 let canvas = document.getElementById('gameScreen');
 let ctx = canvas.getContext('2d');
 
-const GAME_HEIGHT = 600;
-const GAME_WIDTH = 800;
 
-ctx.clearRect(0,0,800,600);
+//setting the height and width of the canvas and the game
+canvas.width = window.innerWidth*0.95;
+canvas.height = window.innerHeight*0.95;
+
+let GAME_HEIGHT = canvas.height;
+let GAME_WIDTH = canvas.width;
+
+ctx.clearRect(0,0,GAME_WIDTH,GAME_HEIGHT);
 
 
+
+//starting the game
 let game = new Game(GAME_WIDTH, GAME_HEIGHT);
 game.start();
+
+
+//starting event handlers
+if('ontouchstart' in canvas) TouchInputHandler(game);
+
+else DesktopInputHandler(game);
+
+
+//drawing game objects
 game.draw(ctx);
 
 
 let lastTime = 0;
-
-
 
 
 //the game loop
@@ -387,7 +472,7 @@ function gameLoop(timestamp){
 	let deltaTime = timestamp - lastTime;
 	lastTime = timestamp;
 	
-	ctx.clearRect(0,0,800,600);
+	ctx.clearRect(0,0,GAME_WIDTH,GAME_HEIGHT);
 	
 	
 	game.update(deltaTime);
