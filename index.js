@@ -413,9 +413,10 @@ class Ball{
 	
 	//shoot the ball
 	shootBall(){
+            if(this.speed.y!==0){
 		this.speed.x = - this.maxSpeed;
 		this.speed.y = - this.maxSpeed;
-		
+	    }
 		//playing shoot sound
 		let shootSound = document.getElementById('shootNbounce_sound');
 		shootSound.play();
