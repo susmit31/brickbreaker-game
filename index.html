@@ -1,27 +1,64 @@
 <!DOCTYPE HTML>
+<meta name='viewport' content='width = device-width, initial-scale = 1.0, maximum-scale = 1.0, user-scalable = no'>
 <html>
 	<head>
 		<meta charset="utf8">
+		<link href="https://fonts.googleapis.com/css?family=Luckiest+Guy&display=swap" rel="stylesheet"> 
+		<link href="https://fonts.googleapis.com/css?family=Acme&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Boogaloo&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Chewy&display=swap" rel="stylesheet"> 
+		<link href="https://fonts.googleapis.com/css?family=Metal+Mania&display=swap" rel="stylesheet"> 
+		<link href="https://fonts.googleapis.com/css?family=Germania+One&display=swap" rel="stylesheet"> 
 		<title>Bubble shooter</title>
 		
 		<style>
+		
 			#gameScreen{
 				border: 1px solid black;
-				background-color: rgb(60,60,60);
+				background-color: rgb(40,30,30);
+				font-family: 'Acme', sans-serif;
+				font-family: 'Luckiest Guy', cursive;
+				font-family: 'Boogaloo', cursive;
+				font-family: 'Chewy', cursive;
+				font-family: 'Germania One', cursive;
 			}
 			
 			img{
 				display: none;
-				}
+			}
+			
 		</style>
 		
 	</head>
 	
-	<body>
-		<img id = 'img_ball' src='assets/images/ball.png'>
-		<canvas id='gameScreen' width=800 height=600></canvas>
+	<body align='center'>
+	
+		<img id='img_ball' src='assets/images/ball.png'>
+		<img id='img_brick' src='assets/images/brick.png'>
 		
-		<script src='src/index.js'></script>
+		
+		
+		<audio id ='break_sound'> 
+			<source src='assets/sounds/crack.wav'>
+		</audio>
+		
+		<audio id='shootNbounce_sound'>
+			<source src='assets/sounds/shoot.wav'>
+		</audio>
+		
+		<audio id='over_sound'>
+			<source src='assets/sounds/game_over.wav'>
+		</audio>
+		
+		<audio id='clear_sound'>
+			<source src='assets/sounds/level_clear.wav'>
+		</audio>
+		
+			
+			
+		<canvas id='gameScreen'></canvas>
+		
+		<script src='src/oldInd.js'></script>
 		
 	</body>
 	
